@@ -1,0 +1,171 @@
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+
+class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MyModalNavigationDrawer()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomScaffold(drawerState: DrawerState, scope: CoroutineScope) {
+
+    Scaffold(
+        // Barra superior
+        topBar = { CustomTopBar(drawerState, scope) },
+
+        // Barra inferior
+        bottomBar = { CustomBottomBar() },
+
+        // Botón flotante personalizado
+        floatingActionButton = { CustomFAB() },
+
+        // Contenido principal
+        content = { padding -> CustomContent(padding) }
+    )
+}
+
+@Composable
+fun CustomContent(padding: PaddingValues) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
+
+        content = {
+            item {
+
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CustomTopBar(drawerState: DrawerState, scope: CoroutineScope) {
+
+    TopAppBar(
+        colors = TopAppBarDefaults.largeTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.primary
+        ),
+        title = { Text(text = "Aplicación", color = Color.Black) },
+        navigationIcon = {
+            IconButton(onClick = { scope.launch { drawerState.apply { if (isClosed) open() else close() } } } ) {
+                Icon(
+                    imageVector = Icons.Filled.Menu,
+                    contentDescription = null
+                )
+            }
+        }
+    )
+}
+
+@Composable
+fun CustomFAB() {
+    FloatingActionButton(
+        onClick = { }) {
+        Text(
+            text = "+",
+            fontSize = 24.sp,
+            color = Color.Black
+        )
+    }
+}
+
+@Composable
+fun CustomBottomBar() {
+    BottomAppBar(
+        content = {
+            Text(
+                text = "Ejemplo",
+                color = Color.Black
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.primaryContainer
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+fun MyModalNavigationDrawer() {
+    // Variables locales para guardar el estado del menú, si está abierto o cerrado.
+    // Con val se declaran las variables locales de solo lectura. (como final en java)
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    // Iconos para el menú
+    val items = listOf(
+        Icons.Default.Home,
+        Icons.Default.Settings,
+        Icons.Default.Favorite,
+        Icons.Default.AccountCircle,
+        Icons.Default.Email
+    )
+
+    // Texto para los iconos del menú.
+    val items_text = listOf(
+        "Home",
+        "Ajustes",
+        "Favoritos",
+        "Perfil",
+        "Contactar"
+    )
+
+    // Item seleccionado del menú. Por defecto se asigna el primero.
+    val SelectedItem = remember { mutableStateOf(items[0]) }
+
+    // Menú
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                var i = 0 // Variable local de L/E. Asigna etiqueta a cada icono.
+                for (item in items) {
+                    // Itera cada ítem del menú y asigna propiedades y evento onClick.
+                    NavigationDrawerItem(
+                        icon = { Icon(item, contentDescription = null) },
+                        label = { Text(items_text.get(i)) },
+                        selected = item == SelectedItem.value,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            SelectedItem.value = item
+                        }
+                    )
+                    i += 1 // Siguiente etiqueta para el siguiente icono.
+                }
+            }
+        },
+        content = {
+            CustomScaffold(drawerState, scope)
+        }
+
+    )
+}
